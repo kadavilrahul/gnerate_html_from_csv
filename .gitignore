@@ -1,0 +1,7 @@
+backups/
+check_versioning.sh
+file_versioning.sh
+*.log
+*.pid
+setup_file_versioning.sh
+.versioningignore

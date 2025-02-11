@@ -10,30 +10,30 @@ update_config() {
     echo "Updating config.json settings..."
     
     # Project settings
-    read -p "Enter project directory [/var/www/main.silkroademart.com]: " project_dir
-    project_dir=${project_dir:-/var/www/main.silkroademart.com}
-    read -p "Enter base URL [https://main.silkroademart.com]: " base_url
-    base_url=${base_url:-https://main.silkroademart.com}
+    read -p "Enter project directory [/path/to/your/directory]: " project_dir
+    project_dir=${project_dir:-/path/to/your/directory}
+    read -p "Enter base URL [https://yourdomain.com]: " base_url
+    base_url=${base_url:-https://yourdomain.com}
     
     # Database settings
-    read -p "Enter database host [78.47.134.46]: " db_host
-    db_host=${db_host:-78.47.134.46}
-    read -p "Enter database username [all_products_user]: " db_user
-    db_user=${db_user:-all_products_user}
-    read -p "Enter database password [all_products_2@]: " db_pass
-    db_pass=${db_pass:-all_products_2@}
-    read -p "Enter database name [all_products_db]: " db_name
-    db_name=${db_name:-all_products_db}
-    read -p "Enter database root password [Karimpadam2@]: " db_root_pass
-    db_root_pass=${db_root_pass:-Karimpadam2@}
+    read -p "Enter database host [yourdatabasehost]: " db_host
+    db_host=${db_host:-yourdatabasehost}
+    read -p "Enter database username [db_user]: " db_user
+    db_user=${db_user:-db_user}
+    read -p "Enter database password [db_pass]: " db_pass
+    db_pass=${db_pass:-db_pass}
+    read -p "Enter database name [db_name]: " db_name
+    db_name=${db_name:-db_name}
+    read -p "Enter database root password [db_root_pass]: " db_root_pass
+    db_root_pass=${db_root_pass:-db_root_pass}
     
     # API settings
-    read -p "Enter API URL [https://wholesale.silkroademart.com/wp-json/wc/v3]: " api_url
-    api_url=${api_url:-https://wholesale.silkroademart.com/wp-json/wc/v3}
-    read -p "Enter API consumer key [ck_7f762d0bb0a2243c237d76fc21c1c4210b3c9453]: " api_key
-    api_key=${api_key:-ck_7f762d0bb0a2243c237d76fc21c1c4210b3c9453}
-    read -p "Enter API consumer secret [cs_70dda921540d202bcdd980ddbeb8c7adb3f8d518]: " api_secret
-    api_secret=${api_secret:-cs_70dda921540d202bcdd980ddbeb8c7adb3f8d518}
+    read -p "Enter API URL [https://yourdomain.com/wp-json/wc/v3]: " api_url
+    api_url=${api_url:-https://yourdomain.com/wp-json/wc/v3}
+    read -p "Enter API consumer key [ck_xxxxx]: " api_key
+    api_key=${api_key:-ck_xxxxx}
+    read -p "Enter API consumer secret [cs_xxxxx]: " api_secret
+    api_secret=${api_secret:-cs_xxxxx}
     
     # Create updated config.json
     cat > config.json << EOF
@@ -55,22 +55,22 @@ update_config() {
     "consumerSecret": "$api_secret"
   },
   "cart": {
-    "baseUrl": "https://wholesale.silkroademart.com/cart/"
+    "baseUrl": "https://yourdomain.com/cart/"
   },
   "navigation": {
-    "shop": "https://silkroademart.com/shop/",
-    "categories": "https://silkroademart.com/elements/product-categories/",
-    "about": "https://silkroademart.com/about/",
-    "contact": "https://silkroademart.com/contact-us/"
+    "shop": "https://yourdomain.com/shop/",
+    "categories": "https://yourdomain.com/elements/product-categories/",
+    "about": "https://yourdomain.com/about/",
+    "contact": "https://yourdomain.com/contact-us/"
   },
   "branding": {
-    "logoUrl": "https://silkroademart.com/",
-    "logoImageUrl": "https://i0.wp.com/silkroademart.com/wp-content/uploads/2024/09/Silkroademart-logo-7.png",
-    "logoTitle": "SilkRoade-Mart",
-    "faviconUrl": "https://silkroademart.com/wp-content/uploads/2023/06/icons8-buying-64.png"
+    "logoUrl": "https://yourdomain.com/",
+    "logoImageUrl": "https://yourdomain.com/wp-content/uploads/logo.png",
+    "logoTitle": "Your Domain",
+    "faviconUrl": "https://yourdomain.com/wp-content/uploads/favicon.png"
   },
   "copyright": {
-    "text": "CopyrightSilkRoade-Mart"
+    "text": "CopyrightYourDomain"
   }
 }
 EOF

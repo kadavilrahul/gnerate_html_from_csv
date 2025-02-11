@@ -43,10 +43,11 @@ The project includes a search.php file that provides product search capabilities
 
 ```
 /var/www/main.silkroademart.com/
-├── config.json          # Configuration file
+├── config.json         # Configuration file
 ├── main.sh             # Main script for setup and configuration
 ├── setup.sh            # Setup script
 ├── search.php          # Product search functionality
+├── products.csv        # CSV file of products that is to be converted to HTML
 ├── data/               # Data files
 │   ├── products_database.xml   # Source XML file
 │   └── products_database.csv   # Converted CSV file

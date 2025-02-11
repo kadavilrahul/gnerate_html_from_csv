@@ -1,132 +1,187 @@
-# Project Setup Instructions
+# Product Catalog Setup
 
-These instructions will guide you through setting up the project.
+This document outlines the steps to set up and run the product catalog system. This system automates the generation of static HTML product pages from a CSV file, downloads product images, generates a sitemap, and creates an XML file for product data.
 
 ## Prerequisites
 
-*   A web server (e.g., Apache, Nginx)
-*   PHP
-*   MySQL
-*   phpMyAdmin (optional, but recommended for database management)
+*   A Linux-based server with shell access.
+*   MySQL installed and configured.
+*   PHP installed and configured with phpMyAdmin (optional).
+*   Node.js and npm installed.
 
-## Setup Steps
+## Setup Instructions
 
-1.  **Make the setup script executable:**
-
-    ```bash
-    chmod +x /var/www/test.silkroademart.com/setup.sh
-    ```
-
-2.  **Modify configuration variables in `setup.sh`:**
-
-    Edit the `setup.sh` file and update the following variables to match your environment:
-
-    *   `PROJECT_DIR` (line 9): The project directory on your server.
-    *   `baseDir` (line 861):  Base directory used in the javascript code.
-    *   `BASE_URL` (line 867): The base URL of your project.
+1.  **Clone the Repository:**
 
     ```bash
-    # Example:
-    PROJECT_DIR="/var/www/your_project_directory"
+    git clone <repository_url>
+    cd <project_directory> # e.g., /var/www/yourproject
     ```
 
-3.  **Run the setup script:**
+2.  **Configure Environment Variables:**
+
+    *   Copy the `.env.example` file to `.env`:
+
+        ```bash
+        cp .env.example .env
+        ```
+
+    *   Edit the `.env` file and configure the following variables:
+
+        ```
+        PROJECT_DIR=<project_directory> # e.g., /var/www/yourproject
+        BASE_DIR=<base_directory> # e.g., /var/www/yourproject
+        BASE_URL=<base_url> # e.g., https://yourdomain.com
+
+        DB_HOST=<your_db_host>
+        DB_USERNAME=<your_db_username>
+        DB_PASSWORD=<your_db_password>
+        DB_NAME=<your_db_name>
+        MYSQL_ROOT_PASSWORD=<your_mysql_root_password>
+
+        API_URL=<your_api_url> # e.g., https://your-api.com/wp-json/wc/v3
+        API_CONSUMER_KEY=<your_api_consumer_key>
+        API_CONSUMER_SECRET=<your_api_consumer_secret>
+
+        CART_URL_BASE=<your_cart_url_base> # e.g., https://your-site.com/cart/
+
+        NAV_SHOP=<your_shop_url> # e.g., https://your-site.com/shop/
+        NAV_CATEGORIES=<your_categories_url> # e.g., https://your-site.com/categories/
+        NAV_ABOUT=<your_about_url> # e.g., https://your-site.com/about/
+        NAV_CONTACT=<your_contact_url> # e.g., https://your-site.com/contact/
+
+        LOGO_URL=<your_logo_url> # e.g., https://your-site.com/
+        LOGO_IMAGE_URL=<your_logo_image_url> # e.g., https://your-site.com/images/logo.png
+        LOGO_TITLE=<your_logo_title> # e.g., Your Company Name
+        ```
+
+    **Important:** Ensure the `.env` file is added to your `.gitignore` file to prevent sensitive information from being committed to your repository.
+
+3.  **Make the Setup Script Executable:**
 
     ```bash
-    sudo /var/www/test.silkroademart.com/setup.sh
+    chmod +x setup.sh
     ```
 
-4.  **Add your CSV file:**
-
-    After the script completes, place your product data CSV file (e.g., `products.csv`) into the `/data` directory.
-
-## Database Setup
-
-1.  **Access the MySQL database:**
+4.  **Run the Setup Script:**
 
     ```bash
-    sudo mysql -u root -p
+    sudo ./setup.sh
     ```
 
-    Enter your MySQL root password when prompted.
+    This script will:
 
-2.  **Create the database and user (if they don't exist):**
+    *   Create the necessary directory structure (`data`, `views`, `public/products`, `public/images`).
+    *   Initialize a Node.js project and install dependencies.
+    *   Create the `product.ejs` template.
+    *   Create the `parse-csv.js` script.
+    *   Set appropriate file permissions.
 
-    ```sql
-    CREATE DATABASE IF NOT EXISTS all_products_db;
-    CREATE USER IF NOT EXISTS 'all_products_user'@'%' IDENTIFIED WITH mysql_native_password BY 'your_database_password';
-    GRANT ALL ON all_products_db.* TO 'all_products_user'@'%';
-    FLUSH PRIVILEGES;
-    ```
+5.  **Prepare Product Data:**
 
-    **Important:** Replace `your_database_password` with a strong, secure password.
+    *   Place your product CSV file (e.g., `products.csv`) in the `data` directory:
 
-3.  **(Optional) Verify database and user creation:**
+        ```bash
+        cp your_products.csv <project_directory>/data/products.csv # e.g., cp your_products.csv /var/www/yourproject/data/products.csv
+        ```
 
-    ```sql
-    SHOW DATABASES;
-    SELECT User FROM mysql.user;
-    EXIT;
-    ```
+    *   Ensure your CSV file has the following columns (case-sensitive):
 
-## Import Product Data
+        ```
+        Title, Regular Price, Category, Image, Short_description, description
+        ```
 
-You can import product data into the `all_products_db` database using phpMyAdmin or the MySQL command line.
+6.  **Database Setup (MySQL):**
 
-### Using phpMyAdmin
+    *   Access the MySQL server:
 
-1.  Log in to phpMyAdmin with the `all_products_user` and the password you set during database setup.
+        ```bash
+        sudo mysql -u root -p
+        ```
 
-2.  **For the initial CSV upload (creating the table):**
+        Enter the MySQL root password when prompted.
 
+    *   Create the database and user (if they don't exist):
+
+        ```sql
+        CREATE DATABASE IF NOT EXISTS all_products_db;
+        CREATE USER IF NOT EXISTS 'all_products_user'@'%' IDENTIFIED WITH mysql_native_password BY 'all_products_2@';
+        GRANT ALL PRIVILEGES ON all_products_db.* TO 'all_products_user'@'%';
+        FLUSH PRIVILEGES;
+        EXIT;
+        ```
+
+7.  **Import Product Data to MySQL:**
+
+    *   Download the XML file located in `<project_directory>/data/products_database.xml`.
+    *   Open the XML file in Excel.
+    *   Save the Excel file as `products.csv`.
+    *   Log in to phpMyAdmin.
     *   Select the `all_products_db` database.
-    *   Click "Import".
-    *   Choose your `products.csv` file.
-    *   Select "CSV" as the format.
-    *   Ensure the "The first line of the file contains the table column names" checkbox is selected.
-    *   Click "Import".
 
-3.  **For subsequent CSV uploads (adding data to an existing table):**
+    *   **For the First Time (Creating the Table):**
 
-    *   Select the `all_products_db` database.
-    *   Select the `products` table.
-    *   Click "Import".
-    *   Choose your `products.csv` file.
-    *   Select "CSV" as the format.
-    *   **Remove the header row from the CSV file before importing.**
-    *   Click "Import".
+        1.  Click "Import".
+        2.  Choose the `products.csv` file.
+        3.  Select "CSV" as the format.
+        4.  Check "The first line of the file contains the table column names."
+        5.  Click "Go".
 
-## Configure Search Functionality
+    *   **For Subsequent Imports (Adding Data):**
 
-1.  **Place `search.php` in the correct directory:**
+        1.  Open the `products.csv` file and remove the header row.
+        2.  Click the `products` table.
+        3.  Click "Import".
+        4.  Choose the `products.csv` file.
+        5.  Select "CSV" as the format.
+        6.  Click "Go".
 
-    Copy the `search.php` file to the `/var/www/test.silkroademart.com/public/products` directory.
-
-2.  **Update database credentials in `search.php`:**
-
-    Edit the `search.php` file and update the database connection details (lines 25-28) to match your database configuration:
-
-    ```php
-    'host'     => 'your_database_host',
-    'username' => 'all_products_user',
-    'password' => 'your_database_password',
-    'database' => 'all_products_db'
-    ```
-
-    Replace `your_database_host` and `your_database_password` with the correct values.
-
-## Removing the Project
-
-1.  **To remove the project folder:**
+8.  **Run the Data Processing Script:**
 
     ```bash
-    rm -r /var/www/your_project_directory
+    cd <project_directory> # e.g., cd /var/www/yourproject
+    node parse-csv.js
     ```
 
-2.  **To empty the project folder:**
+    This script will:
 
-    ```bash
-    sudo rm -rf /var/www/your_project_directory/*
-    ```
+    *   Read the product data from `products.csv`.
+    *   Download product images.
+    *   Generate HTML files for each product in the `public/products` directory.
+    *   Create a `sitemap.xml` file.
+    *   Create `products_database.xml`.
 
-    Replace `/var/www/your_project_directory` with the actual path to your project directory.
+9.  **Configure Search Functionality:**
+
+    *   Place the `search.php` file in the `<project_directory>/public/products` directory.
+
+    *   Modify the database connection details in `search.php` to match your environment variables:
+
+        ```php
+            'host'     => getenv('DB_HOST'),
+            'username' => getenv('DB_USERNAME'),
+            'password' => getenv('DB_PASSWORD'),
+            'database' => getenv('DB_NAME')
+        ```
+
+        Also ensure to load environment variables in `search.php` using a package like `vlucas/phpdotenv`
+
+10. **Web Server Configuration:**
+
+    *   Configure your web server (e.g., Apache, Nginx) to serve the files in the `public` directory.
+    *   Ensure that PHP is properly configured to process `search.php`.
+
+## Additional Information
+
+*   **Database Location:** Ensure the database server is accessible from the web server for images and other data to display correctly.
+*   **File Management:**
+    *   To remove a folder: `rm -r <directory_to_remove>`
+    *   To empty a folder: `sudo rm -rf <directory_to_empty>/*`
+
+## Contributing
+
+Contributions are welcome! Please submit pull requests with detailed explanations of your changes.
+
+## License
+
+[Specify License, e.g., MIT License]

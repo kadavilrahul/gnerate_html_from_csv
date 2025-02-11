@@ -3,10 +3,22 @@
 # Exit on any error
 set -e
 
+# Check if Node.js and npm are installed
+command -v node >/dev/null 2>&1 || { echo >&2 "Error: Node.js is not installed. Please install it and try again."; exit 1; }
+command -v npm >/dev/null 2>&1 || { echo >&2 "Error: npm is not installed. Please install it and try again."; exit 1; }
+
+# Load environment variables from .env file
+if [ -f .env ]; then
+    export $(cat .env | grep -v '^#' | xargs)
+else
+    echo "Error: .env file not found"
+    exit 1
+fi
+
 echo "Starting setup process..."
 
 # Define configuration variables
-PROJECT_DIR="/var/www/test.silkroademart.com"
+PROJECT_DIR="$PROJECT_DIR"  # Loaded from .env
 
 # Create project structure
 echo "Creating directory structure..."
@@ -25,7 +37,7 @@ echo "Initializing Node.js project..."
 npm init -y
 
 echo "Installing dependencies..."
-npm install csv-parser ejs axios @json2csv/node
+npm install csv-parser ejs axios @json2csv/node || { echo >&2 "Error: npm install failed. Please check the error message above and try again."; exit 1; }
 
 # Create EJS template
 echo "Creating EJS template..."
@@ -519,10 +531,9 @@ footer{
     
                 <!-- Logo -->
                 <div id="logo" class="flex-col logo">
-                    <a href="https://silkroademart.com/" title="Silk Road e-Mart">
-                        <img class="logo-image"  src="https://i0.wp.com/silkroademart.com/wp-content/uploads/2024/09/Silkroademart-logo-7.png?fit=922%2C743&amp;ssl=1" alt="Silk Road e-Mart">
+                    <a href="<%= process.env.LOGO_URL %>" title="<%= process.env.LOGO_TITLE %>">
+                        <img class="logo-image" src="<%= process.env.LOGO_IMAGE_URL %>" alt="<%= process.env.LOGO_TITLE %>">
                     </a>
-                </div>
     
                 <!-- Collapsible Navbar Content -->
                 <div class="collapse navbar-collapse" id="navbarContent">
@@ -548,10 +559,10 @@ footer{
             
                     </div>
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" href="https://silkroademart.com/shop//">Shop</a></li>
-                        <li class="nav-item"><a class="nav-link" href="https://silkroademart.com/elements/product-categories/">Categories</a></li>
-                        <li class="nav-item"><a class="nav-link" href="https://silkroademart.com/about/">About</a></li>
-                        <li class="nav-item"><a class="nav-link" href="https://silkroademart.com/contact-us/">Contact</a></li>
+                        <li class="nav-item"><a class="nav-link" href="<%= process.env.NAV_SHOP %>">Shop</a></li>
+                        <li class="nav-item"><a class="nav-link" href="<%= process.env.NAV_CATEGORIES %>">Categories</a></li>
+                        <li class="nav-item"><a class="nav-link" href="<%= process.env.NAV_ABOUT %>">About</a></li>
+                        <li class="nav-item"><a class="nav-link" href="<%= process.env.NAV_CONTACT %>">Contact</a></li>
                     </ul>
                     <div class="d-flex ms-auto">
                         <!-- Login Link -->
@@ -707,8 +718,8 @@ footer{
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const API_URL = 'https://wholesale.silkroademart.com/wp-json/wc/v3';
-    const CREDENTIALS = btoa('ck_7f762d0bb0a2243c237d76fc21c1c4210b3c9453:cs_70dda921540d202bcdd980ddbeb8c7adb3f8d518');
+    const API_URL = process.env.API_URL;
+    const CREDENTIALS = btoa(process.env.API_CREDENTIALS);
 
     let createdProductId = null;
 
@@ -770,7 +781,7 @@ footer{
 
             // Redirect to WooCommerce cart with the product added
             const quantity = document.querySelector('input[name="quantity"]').value;
-            const cartUrl = `https://wholesale.silkroademart.com/cart/?add-to-cart=${createdProductId}&quantity=${quantity}`;
+            const cartUrl = `${process.env.CART_URL_BASE}?add-to-cart=${createdProductId}&quantity=${quantity}`;
             window.location.href = cartUrl;
         } catch (error) {
             console.error('Error:', error);
@@ -851,6 +862,7 @@ EOL
 # Create parse-csv.js
 echo "Creating parse-csv.js script..."
 cat > parse-csv.js << 'EOL'
+require('dotenv').config();
 const axios = require('axios');
 const csv = require('csv-parser');
 const fs = require('fs');
@@ -858,13 +870,13 @@ const path = require('path');
 const ejs = require('ejs');
 
 // Define directories
-const baseDir = '/var/www/test.silkroademart.com';
+const baseDir = process.env.BASE_DIR;  // Loaded from .env
 const outputDir = path.join(baseDir, 'public/products');
 const imagesDir = path.join(baseDir, 'public/images');
 const dataDir = path.join(baseDir, 'data');
 
 // Base URL configurations
-const BASE_URL = 'https://test.silkroademart.com';
+const BASE_URL = process.env.BASE_URL;  // Loaded from .env
 const PRODUCTS_BASE_URL = `${BASE_URL}/public/products`;
 const IMAGES_BASE_URL = `${BASE_URL}/public/images`;
 

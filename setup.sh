@@ -3,80 +3,110 @@
 # Exit on any error
 set -e
 
-# Check if Node.js and npm are installed
-command -v node >/dev/null 2>&1 || { echo >&2 "Error: Node.js is not installed. Please install it and try again."; exit 1; }
-command -v npm >/dev/null 2>&1 || { echo >&2 "Error: npm is not installed. Please install it and try again."; exit 1; }
+echo "Starting setup process..."
 
-# Load environment variables from .env file
-if [ -f .env ]; then
-    export $(cat .env | grep -v '^#' | xargs)
-else
-    echo "Error: .env file not found"
+# Check if products.csv exists in the current directory
+if [ ! -f "products.csv" ]; then
+    echo "Error: products.csv not found in the current directory"
+    echo "Please place products.csv in the project root directory before running setup"
     exit 1
 fi
 
-echo "Starting setup process..."
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+    echo "jq is required but not installed. Installing jq..."
+    sudo apt-get update && sudo apt-get install -y jq
+fi
 
-# Define configuration variables
-PROJECT_DIR="$PROJECT_DIR"  # Loaded from .env
+# Get configuration values from config.json
+PROJECT_DIR=$(jq -r '.project.directory' config.json)
+BASE_URL=$(jq -r '.project.baseUrl' config.json)
+API_URL=$(jq -r '.api.url' config.json)
+API_KEY=$(jq -r '.api.consumerKey' config.json)
+API_SECRET=$(jq -r '.api.consumerSecret' config.json)
+FAVICON_URL=$(jq -r '.branding.faviconUrl' config.json)
+
+# Function to move files to correct locations
+move_project_files() {
+    echo "Moving project files to correct locations..."
+    
+    # Move search.php to public/products if it exists
+    if [ -f "$PROJECT_DIR/search.php" ]; then
+        echo "Moving search.php to public/products directory..."
+        mv "$PROJECT_DIR/search.php" "$PROJECT_DIR/public/products/"
+        echo "search.php moved successfully"
+    else
+        echo "Warning: search.php not found in project root directory"
+    fi
+
+    # Move products.csv to data directory if it exists
+    if [ -f "$PROJECT_DIR/products.csv" ]; then
+        echo "Moving products.csv to data directory..."
+        mv "$PROJECT_DIR/products.csv" "$PROJECT_DIR/data/"
+        echo "products.csv moved successfully"
+    else
+        echo "Warning: products.csv not found in project root directory"
+    fi
+}
 
 # Create project structure
 echo "Creating directory structure..."
-sudo mkdir -p $PROJECT_DIR/{data,views,public/{products,images}}
+sudo mkdir -p "$PROJECT_DIR"/{data,views,public/{products,images}}
 
-# Set proper ownership and permissions
+# Set proper permissions
 echo "Setting permissions..."
-sudo chown -R $USER:$USER $PROJECT_DIR
-sudo chmod -R 755 $PROJECT_DIR
+sudo chown -R "$USER:$USER" "$PROJECT_DIR"
+sudo chmod -R 755 "$PROJECT_DIR"
 
 # Navigate to project directory
-cd $PROJECT_DIR
+cd "$PROJECT_DIR"
 
 # Initialize Node.js project and install dependencies
 echo "Initializing Node.js project..."
 npm init -y
 
 echo "Installing dependencies..."
-npm install csv-parser ejs axios @json2csv/node || { echo >&2 "Error: npm install failed. Please check the error message above and try again."; exit 1; }
+npm install csv-parser ejs axios @json2csv/node
 
-# Create EJS template
+# Create EJS template with injected configuration
 echo "Creating EJS template..."
-cat > views/product.ejs << 'EOL'
+cat > views/product.ejs << EOL
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %></title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <style>
-      .loading-spinner {
-          display: none;
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 1002;
-      }
-      .success-message, .error-message {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          padding: 15px;
-          border-radius: 4px;
-          display: none;
-          z-index: 1001;
-          color: white;
-      }
-      .success-message {
-          background-color: #4CAF50;
-      }
-      .error-message {
-          background-color: #f44336;
-      }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="icon" type="image/x-icon" href="${FAVICON_URL}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1002;
+        }
+        .success-message, .error-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+            z-index: 1001;
+            color: white;
+        }
+        .success-message {
+            background-color: #4CAF50;
+        }
+        .error-message {
+            background-color: #f44336;
+        }
 
-      body{
+        body{
         background-color: rgb(237, 237, 237);
     }
     #logo {
@@ -256,227 +286,6 @@ cat > views/product.ejs << 'EOL'
 .search-section{
     padding-left: 270px;
 }
-.search-drop-down select{
-    width: 100%;
-    padding: 0;
-    height: 100%;
-}
-.add-to-cart-section{
-    background-color: white;
-    text-align: center;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    border-radius: 20px;
-    box-shadow: 0 3px 6px -4px rgb(0 0 0 / .16), 0 3px 6px rgb(0 0 0 / .23);
-}
-.number-input {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 72px;
-            margin: 20px;
-            border: 1px solid #ddd;
-            border-radius: 99px;
-            overflow: hidden;
-            margin: 30px 90px;
-        }
-
-        .number-input button {
-            background-color: #ddd;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            margin-right: 0;
-            height: 40px; /* Match the input's height */
-            padding: 4px 4px;
-        }
-
-        .number-input button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        .number-input input[type="number"] {
-            width: 37px;
-            text-align: center;
-            font-size: 16px;
-            border: none;
-            height: 40px; /* Match the button's height */
-            background-color: #ccc;
-        }
-
-        .number-input button:first-child {
-            border-right: 1px solid #ddd; /* Seamless border between button and input */
-        }
-
-        .number-input button:last-child {
-            border-left: 1px solid #ddd; /* Seamless border between button and input */
-        }
-        .add-to-cart-button{
-            background-color: #4b9cd2;
-            color: white;
-            border-radius: 20px;
-        }
-        .add-to-cart-section-bottom{
-            background-color: white;
-            border-radius: 20px;
-            box-shadow: 0 3px 6px -4px rgb(0 0 0 / .16), 0 3px 6px rgb(0 0 0 / .23);
-            padding: 30px;
-
-
-        }
-        .add-to-cart-section-bottom li{
-            border-bottom: 1px solid grey;
-            padding: 7px 0 7px 25px;
-            font-size: 16px;
-        }
-        .Description-section{
-            background-color: white;
-            padding: 30px;
-            border-radius: 20px;
-        }
-        .Description-section .description-toggle {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.Description-section .arrow {
-    display: inline-block;
-    transition: transform 0.3s ease;
-}
-
-.Description-section .arrow.open {
-    transform: rotate(180deg);
-}
-
-.Description-details {
-    max-height: none; /* Full height by default */
-    opacity: 1;       /* Fully visible by default */
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
-}
-
-.Description-details.collapsed {
-    max-height: 0;
-    opacity: 0;
-}
-.description-toggle{
-    font-size: 17.6px;
-    font-weight: 400;
-    color:#777777
-}
-.Description-details strong{
-    font-size: 12.8px;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: #777777;
-}
-.top-footer{
-    height: 40px;
-    background-color: #777;
-}
-footer{
-    background-color: #5b5b5b;
-    display: flex;
-    justify-content: space-between; /* Ensures both divs are at the ends of the line */
-    align-items: center;
-    padding-left: 30px;
-    padding-right: 30px;
-}
-.footer .container {
-    margin: 0; /* Removes any default margins */
-}
-
-.text-right {
-    text-align: right;
-}
-.Copyright{
-    color: #a5a4a4;
-}
-.payment-icons i{
-    font-size: 40px;
-    margin-right: 10px;
-
-}
-/* Style to highlight the selected thumbnail */
-#thumbnailSlider img:hover {
-    opacity: 0.7;
-    transform: scale(1.1);
-    transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-#thumbnailSlider img.active {
-    border: 2px solid #007bff; /* Border color when active */
-}
-.logo-image{
-    width:200px;
-    height: 90px;
-}
-
-/* Adjust logo for mobile */
-@media (max-width: 768px) {
-    #logo {
-        margin: 0 auto; /* Center the logo */
-        text-align: center;
-    }
-
-    .navbar-toggler {
-        position: absolute;
-        left: 10px; /* Position menu button on the left */
-    }
-
-    .collapse.navbar-collapse {
-        position: fixed;
-        top: 0;
-        left: -100%;
-        height: 100%;
-        width: 250px;
-        background: #f8f9fa;
-        z-index: 1050;
-        overflow-y: auto;
-        transition: left 0.3s ease-in-out;
-    }
-
-    .collapse.navbar-collapse.show {
-        left: 0;
-    }
-
-    .navbar-nav {
-        display: flex;
-        flex-direction: column;
-        padding: 1rem;
-    }
-
-    .nav-item {
-        margin-bottom: 1rem;
-    }
-    #navbarContent {
-    position: fixed; /* Keep the menu fixed */
-    top: 0;
-     /* Initially hide the menu off-screen */
-    height: 100vh; /* Full height for the menu */
-    width: 350px; /* Set the width of the sliding menu */
-    background-color: white; /* Menu background color */
-    z-index: 1050; /* Ensure it stays on top */
-    transition: transform 0.3s ease-in-out; /* Smooth sliding animation */
-    transform: translateX(-100%); /* Start off-screen */
-}
-
-#navbarContent.show {
-    transform: translateX(0); /* Slide into view when shown */
-}
-.collapse .btn-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-}
-.search-section{
-    padding-left: 50px;
-    padding-top: 20px;
-}
 .m_search{
     margin-top: 100px;
 }
@@ -531,9 +340,10 @@ footer{
     
                 <!-- Logo -->
                 <div id="logo" class="flex-col logo">
-                    <a href="<%= process.env.LOGO_URL %>" title="<%= process.env.LOGO_TITLE %>">
-                        <img class="logo-image" src="<%= process.env.LOGO_IMAGE_URL %>" alt="<%= process.env.LOGO_TITLE %>">
+                    <a href="https://silkroademart.com/" title="Silk Road e-Mart">
+                        <img class="logo-image"  src="https://i0.wp.com/silkroademart.com/wp-content/uploads/2024/09/Silkroademart-logo-7.png?fit=922%2C743&amp;ssl=1" alt="Silk Road e-Mart">
                     </a>
+                </div>
     
                 <!-- Collapsible Navbar Content -->
                 <div class="collapse navbar-collapse" id="navbarContent">
@@ -559,10 +369,10 @@ footer{
             
                     </div>
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" href="<%= process.env.NAV_SHOP %>">Shop</a></li>
-                        <li class="nav-item"><a class="nav-link" href="<%= process.env.NAV_CATEGORIES %>">Categories</a></li>
-                        <li class="nav-item"><a class="nav-link" href="<%= process.env.NAV_ABOUT %>">About</a></li>
-                        <li class="nav-item"><a class="nav-link" href="<%= process.env.NAV_CONTACT %>">Contact</a></li>
+                        <li class="nav-item"><a class="nav-link" href="https://silkroademart.com/shop//">Shop</a></li>
+                        <li class="nav-item"><a class="nav-link" href="https://silkroademart.com/elements/product-categories/">Categories</a></li>
+                        <li class="nav-item"><a class="nav-link" href="https://silkroademart.com/about/">About</a></li>
+                        <li class="nav-item"><a class="nav-link" href="https://silkroademart.com/contact-us/">Contact</a></li>
                     </ul>
                     <div class="d-flex ms-auto">
                         <!-- Login Link -->
@@ -686,7 +496,7 @@ footer{
 
     <footer class="py-3 footer">
         <div class=" text-left Copyright">
-            <p>Copyright 2024 ©  Silk Road e-Mart</p>
+            <p>Copyright 2024  Silk Road e-Mart</p>
         </div>
         <div class="text-right">
             <nav class="d-flex align-items-center flex-grow-1">
@@ -716,10 +526,10 @@ footer{
 <div id="successMessage" class="success-message">Operation successful!</div>
 <div id="errorMessage" class="error-message">An error occurred. Please try again.</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const API_URL = process.env.API_URL;
-    const CREDENTIALS = btoa(process.env.API_CREDENTIALS);
+    const API_URL = "${API_URL}";
+    const CREDENTIALS = btoa("${API_KEY}:${API_SECRET}");
+    const BASE_URL = "${BASE_URL}";
 
     let createdProductId = null;
 
@@ -781,7 +591,7 @@ footer{
 
             // Redirect to WooCommerce cart with the product added
             const quantity = document.querySelector('input[name="quantity"]').value;
-            const cartUrl = `${process.env.CART_URL_BASE}?add-to-cart=${createdProductId}&quantity=${quantity}`;
+            const cartUrl = `${BASE_URL}/cart/?add-to-cart=${createdProductId}&quantity=${quantity}`;
             window.location.href = cartUrl;
         } catch (error) {
             console.error('Error:', error);
@@ -862,21 +672,23 @@ EOL
 # Create parse-csv.js
 echo "Creating parse-csv.js script..."
 cat > parse-csv.js << 'EOL'
-require('dotenv').config();
 const axios = require('axios');
 const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
 
+// Load configuration from config.json
+const config = require('./config.json');
+
 // Define directories
-const baseDir = process.env.BASE_DIR;  // Loaded from .env
+const baseDir = config.project.directory;
 const outputDir = path.join(baseDir, 'public/products');
 const imagesDir = path.join(baseDir, 'public/images');
 const dataDir = path.join(baseDir, 'data');
 
 // Base URL configurations
-const BASE_URL = process.env.BASE_URL;  // Loaded from .env
+const BASE_URL = config.project.baseUrl;
 const PRODUCTS_BASE_URL = `${BASE_URL}/public/products`;
 const IMAGES_BASE_URL = `${BASE_URL}/public/images`;
 
@@ -911,28 +723,6 @@ function sanitizeFilename(filename) {
     return filename.toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
-}
-
-// Function to generate products XML
-async function generateProductsXML(products) {
-    try {
-        const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<products>
-    ${products.map(product => `
-    <product>
-        <title><![CDATA[${product.Title}]]></title>
-        <price><![CDATA[${product['Regular Price']}]]></price>
-        <product_link><![CDATA[${PRODUCTS_BASE_URL}/${sanitizeFilename(product.Title)}.html]]></product_link>
-        <category><![CDATA[${product.Category}]]></category>
-        <image_url><![CDATA[${IMAGES_BASE_URL}/${sanitizeFilename(product.Title)}${path.extname(product.Image) || '.jpg'}]]></image_url>
-    </product>`).join('')}
-</products>`;
-
-        fs.writeFileSync(path.join(dataDir, 'products_database.xml'), xmlContent);
-        console.log('Products XML generated successfully!');
-    } catch (error) {
-        console.error('Error generating XML:', error);
-    }
 }
 
 // Function to generate sitemap
@@ -1007,9 +797,6 @@ fs.createReadStream(path.join(dataDir, 'products.csv'))
             // Generate sitemap
             await generateSitemap(allProducts);
 
-            // Generate products XML
-            await generateProductsXML(allProducts);
-
             console.log('Processing complete!');
         } catch (error) {
             console.error('Error in final processing:', error);
@@ -1020,11 +807,22 @@ fs.createReadStream(path.join(dataDir, 'products.csv'))
     });
 EOL
 
+# Move files to correct locations after directories are created
+move_project_files
+
 # Set web server permissions
 echo "Setting web server permissions..."
-sudo chown -R www-data:www-data $PROJECT_DIR
-sudo chmod -R 755 $PROJECT_DIR
+sudo chown -R www-data:www-data "$PROJECT_DIR"
 
 echo "Setup completed successfully!"
-echo "Please add your CSV file to the $PROJECT_DIR/data directory"
-echo "Then run: cd $PROJECT_DIR && node parse-csv.js"
+
+# Ask user if they want to generate HTML pages
+read -p "Do you want to generate HTML pages now? (y/n): " generate_pages
+
+if [ "$generate_pages" = "y" ] || [ "$generate_pages" = "Y" ]; then
+    echo "Generating HTML pages..."
+    cd "$PROJECT_DIR" && node parse-csv.js
+    echo "HTML page generation complete!"
+else
+    echo "You can generate HTML pages later by running: cd $PROJECT_DIR && node parse-csv.js"
+fi

@@ -1,6 +1,3 @@
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
 <a href="<?php echo esc_url($product['product_link']); ?>" target="_blank">
     <img src="<?php echo esc_url($product['image_url']); ?>" 
          alt="<?php echo esc_attr($product['title']); ?>">
@@ -32,10 +29,10 @@ function esc_html($str) {
 
 // Database configuration
 $db_config = array(
-    'host'    => getenv('DB_HOST'),
-    'username' => getenv('DB_USERNAME'),
-    'password' => getenv('DB_PASSWORD'),
-    'database' => getenv('DB_NAME')
+    'host'     => 'localhost',
+    'username' => 'all_products_user',
+    'password' => 'all_products_2@',
+    'database' => 'all_products_db'
 );
 
 // Get and sanitize the search term

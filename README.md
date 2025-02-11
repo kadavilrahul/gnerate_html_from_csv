@@ -1,187 +1,87 @@
-# Product Catalog Setup
+# Silk Road e-Mart Product Generator
 
-This document outlines the steps to set up and run the product catalog system. This system automates the generation of static HTML product pages from a CSV file, downloads product images, generates a sitemap, and creates an XML file for product data.
+This project generates static HTML product pages, sitemap, and product XML from CSV data for the Silk Road e-Mart website.
 
 ## Prerequisites
 
-*   A Linux-based server with shell access.
-*   MySQL installed and configured.
-*   PHP installed and configured with phpMyAdmin (optional).
-*   Node.js and npm installed.
+- Node.js (v14 or higher)
+- npm
+- jq (for JSON processing in setup script)
+- PHP with mysqli extension
 
-## Setup Instructions
+## Setup
+1. Prepare products.csv as per sample_products.csv 
+   Place it in main project directory
+   
 
-1.  **Clone the Repository:**
+2. Run the main s alncript:
+   ```bash
+   chmod +x main.sh
+   ./main.sh
+   ```
+   This will:
+   - Update configuration in config.json (if needed)
+   - Update database settings in search.php
+   - Run setup.sh (optional)
+   - Convert XML to CSV format
 
-    ```bash
-    git clone <repository_url>
-    cd <project_directory> # e.g., /var/www/yourproject
-    ```
+3. The setup script (setup.sh) will:
+   - Create necessary directories
+   - Install dependencies
+   - Set up EJS templates
+   - Configure API credentials
 
-2.  **Configure Environment Variables:**
+## Search Functionality
 
-    *   Copy the `.env.example` file to `.env`:
+The project includes a search.php file that provides product search capabilities:
+- Searches through product titles, descriptions, and categories
+- Returns results in a responsive grid layout
+- Includes product images, prices, and details
+- Supports error handling and proper sanitization
 
-        ```bash
-        cp .env.example .env
-        ```
+## Directory Structure
 
-    *   Edit the `.env` file and configure the following variables:
+```
+/var/www/main.silkroademart.com/
+├── config.json          # Configuration file
+├── main.sh             # Main script for setup and configuration
+├── setup.sh            # Setup script
+├── search.php          # Product search functionality
+├── data/               # Data files
+│   ├── products_database.xml   # Source XML file
+│   └── products_database.csv   # Converted CSV file
+├── views/              # EJS templates
+│   └── product.ejs     # Product page template
+└── public/             # Generated files
+    ├── products/       # Generated HTML files
+    └── images/         # Downloaded product images
+```
 
-        ```
-        PROJECT_DIR=<project_directory> # e.g., /var/www/yourproject
-        BASE_DIR=<base_directory> # e.g., /var/www/yourproject
-        BASE_URL=<base_url> # e.g., https://yourdomain.com
+## Generated Files
 
-        DB_HOST=<your_db_host>
-        DB_USERNAME=<your_db_username>
-        DB_PASSWORD=<your_db_password>
-        DB_NAME=<your_db_name>
-        MYSQL_ROOT_PASSWORD=<your_mysql_root_password>
+- `public/products/*.html`: Individual product pages
+- `public/images/*`: Product images
+- `sitemap.xml`: Site map for search engines
+- `products.xml`: Product catalog in XML format
+- `products_database.csv`: Converted product data in CSV format
 
-        API_URL=<your_api_url> # e.g., https://your-api.com/wp-json/wc/v3
-        API_CONSUMER_KEY=<your_api_consumer_key>
-        API_CONSUMER_SECRET=<your_api_consumer_secret>
+## Error Handling
 
-        CART_URL_BASE=<your_cart_url_base> # e.g., https://your-site.com/cart/
+- Check the console output for any errors during processing
+- Image download failures will be logged but won't stop the process
+- Database connection errors will be reported in the console
+- Search functionality includes proper error handling and user feedback
 
-        NAV_SHOP=<your_shop_url> # e.g., https://your-site.com/shop/
-        NAV_CATEGORIES=<your_categories_url> # e.g., https://your-site.com/categories/
-        NAV_ABOUT=<your_about_url> # e.g., https://your-site.com/about/
-        NAV_CONTACT=<your_contact_url> # e.g., https://your-site.com/contact/
+## Security Notes
 
-        LOGO_URL=<your_logo_url> # e.g., https://your-site.com/
-        LOGO_IMAGE_URL=<your_logo_image_url> # e.g., https://your-site.com/images/logo.png
-        LOGO_TITLE=<your_logo_title> # e.g., Your Company Name
-        ```
+- API credentials are stored in config.json
+- Database credentials are properly secured
+- All user inputs are sanitized
+- Prepared statements are used for database queries
+- Ensure proper file permissions are set
 
-    **Important:** Ensure the `.env` file is added to your `.gitignore` file to prevent sensitive information from being committed to your repository.
+## Support
 
-3.  **Make the Setup Script Executable:**
-
-    ```bash
-    chmod +x setup.sh
-    ```
-
-4.  **Run the Setup Script:**
-
-    ```bash
-    sudo ./setup.sh
-    ```
-
-    This script will:
-
-    *   Create the necessary directory structure (`data`, `views`, `public/products`, `public/images`).
-    *   Initialize a Node.js project and install dependencies.
-    *   Create the `product.ejs` template.
-    *   Create the `parse-csv.js` script.
-    *   Set appropriate file permissions.
-
-5.  **Prepare Product Data:**
-
-    *   Place your product CSV file (e.g., `products.csv`) in the `data` directory:
-
-        ```bash
-        cp your_products.csv <project_directory>/data/products.csv # e.g., cp your_products.csv /var/www/yourproject/data/products.csv
-        ```
-
-    *   Ensure your CSV file has the following columns (case-sensitive):
-
-        ```
-        Title, Regular Price, Category, Image, Short_description, description
-        ```
-
-6.  **Database Setup (MySQL):**
-
-    *   Access the MySQL server:
-
-        ```bash
-        sudo mysql -u root -p
-        ```
-
-        Enter the MySQL root password when prompted.
-
-    *   Create the database and user (if they don't exist):
-
-        ```sql
-        CREATE DATABASE IF NOT EXISTS products_db;
-        CREATE USER IF NOT EXISTS 'products_user'@'%' IDENTIFIED WITH mysql_native_password BY 'products_2@';
-        GRANT ALL PRIVILEGES ON products_db.* TO 'products_user'@'%';
-        FLUSH PRIVILEGES;
-        EXIT;
-        ```
-
-7.  **Import Product Data to MySQL:**
-
-    *   Download the XML file located in `<project_directory>/data/products_database.xml`.
-    *   Open the XML file in Excel.
-    *   Save the Excel file as `products.csv`.
-    *   Log in to phpMyAdmin.
-    *   Select the `all_products_db` database.
-
-    *   **For the First Time (Creating the Table):**
-
-        1.  Click "Import".
-        2.  Choose the `products.csv` file.
-        3.  Select "CSV" as the format.
-        4.  Check "The first line of the file contains the table column names."
-        5.  Click "Go".
-
-    *   **For Subsequent Imports (Adding Data):**
-
-        1.  Open the `products.csv` file and remove the header row.
-        2.  Click the `products` table.
-        3.  Click "Import".
-        4.  Choose the `products.csv` file.
-        5.  Select "CSV" as the format.
-        6.  Click "Go".
-
-8.  **Run the Data Processing Script:**
-
-    ```bash
-    cd <project_directory> # e.g., cd /var/www/yourproject
-    node parse-csv.js
-    ```
-
-    This script will:
-
-    *   Read the product data from `products.csv`.
-    *   Download product images.
-    *   Generate HTML files for each product in the `public/products` directory.
-    *   Create a `sitemap.xml` file.
-    *   Create `products_database.xml`.
-
-9.  **Configure Search Functionality:**
-
-    *   Place the `search.php` file in the `<project_directory>/public/products` directory.
-
-    *   Modify the database connection details in `search.php` to match your environment variables:
-
-        ```php
-            'host'     => getenv('DB_HOST'),
-            'username' => getenv('DB_USERNAME'),
-            'password' => getenv('DB_PASSWORD'),
-            'database' => getenv('DB_NAME')
-        ```
-
-        Also ensure to load environment variables in `search.php` using a package like `vlucas/phpdotenv`
-
-10. **Web Server Configuration:**
-
-    *   Configure your web server (e.g., Apache, Nginx) to serve the files in the `public` directory.
-    *   Ensure that PHP is properly configured to process `search.php`.
-
-## Additional Information
-
-*   **Database Location:** Ensure the database server is accessible from the web server for images and other data to display correctly.
-*   **File Management:**
-    *   To remove a folder: `rm -r <directory_to_remove>`
-    *   To empty a folder: `sudo rm -rf <directory_to_empty>/*`
-
-## Contributing
-
-Contributions are welcome! Please submit pull requests with detailed explanations of your changes.
-
-## License
-
-[Specify License, e.g., MIT License]
+For support, please contact:
+- Technical support: support@silkroademart.com
+- General inquiries: info@silkroademart.com

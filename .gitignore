@@ -1,8 +1,16 @@
 backups/
+node_modules/
 check_versioning.sh
 file_versioning.sh
 *.log
 *.pid
+*.html
+*.js
+*.ejs
+*.webp
+*.xml
 setup_file_versioning.sh
 .versioningignore
-.env
+
+
+

@@ -5,3 +5,4 @@ file_versioning.sh
 *.pid
 setup_file_versioning.sh
 .versioningignore
+.env

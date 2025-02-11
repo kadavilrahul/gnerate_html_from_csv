@@ -104,9 +104,9 @@ This document outlines the steps to set up and run the product catalog system. T
     *   Create the database and user (if they don't exist):
 
         ```sql
-        CREATE DATABASE IF NOT EXISTS all_products_db;
-        CREATE USER IF NOT EXISTS 'all_products_user'@'%' IDENTIFIED WITH mysql_native_password BY 'all_products_2@';
-        GRANT ALL PRIVILEGES ON all_products_db.* TO 'all_products_user'@'%';
+        CREATE DATABASE IF NOT EXISTS products_db;
+        CREATE USER IF NOT EXISTS 'products_user'@'%' IDENTIFIED WITH mysql_native_password BY 'products_2@';
+        GRANT ALL PRIVILEGES ON products_db.* TO 'products_user'@'%';
         FLUSH PRIVILEGES;
         EXIT;
         ```

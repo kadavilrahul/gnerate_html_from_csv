@@ -1,6 +1,6 @@
-# Silk Road e-Mart Product Generator
+# HTML Product Generator
 
-This project generates static HTML product pages, sitemap, and product XML from CSV data for the Silk Road e-Mart website.
+This project generates static HTML product pages, sitemap, and product XML from CSV data for a website.
 
 ## Prerequisites
 
@@ -14,10 +14,9 @@ This project generates static HTML product pages, sitemap, and product XML from 
    Place it in main project directory
    
 
-2. Run the main s alncript:
+2. Run the main script:
    ```bash
-   chmod +x main.sh
-   ./main.sh
+   bash main.sh
    ```
    This will:
    - Update configuration in config.json (if needed)
@@ -30,6 +29,7 @@ This project generates static HTML product pages, sitemap, and product XML from 
    - Install dependencies
    - Set up EJS templates
    - Configure API credentials
+   - Prices are currently setup n India Rupees
 
 ## Search Functionality
 

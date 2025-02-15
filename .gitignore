@@ -1,8 +1,11 @@
 
+.aider*
 backups/
+*cache.db*
 check_versioning.sh
 *.ejs
 file_versioning.sh
+*.gitignore
 *.html
 *.js
 *.log

@@ -12,8 +12,8 @@ This project generates static HTML product pages, sitemap, and product XML from 
 - PHP with mysqli extension
 
 ## Setup
-1. Prepare products.csv as per sample_products.csv 
-   Place it in main project directory
+1. Prepare products.csv as per sample_products.csv. You may also rename sample_products.csv to products.csv.
+   Place products.csv in main project directory else script will fail.
    
 2. Clone the repository files to you r project directory
    ```bash

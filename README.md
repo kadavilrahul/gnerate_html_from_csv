@@ -15,8 +15,12 @@ This project generates static HTML product pages, sitemap, and product XML from 
 1. Prepare products.csv as per sample_products.csv 
    Place it in main project directory
    
-
-2. Run the main script:
+2. Clone the repository files to you r project directory
+   ```bash
+   git clone -b version-01 https://github.com/kadavilrahul/generate_html_from_csv .
+   ```
+   
+3. Run the main script:
    ```bash
    bash main.sh
    ```

@@ -5,6 +5,73 @@ set -e
 
 echo "Starting main process..."
 
+# Check current directory and permissions
+echo "Important Pre-checks:"
+echo "===================="
+
+# Check current directory
+pwd_output=$(pwd)
+echo "Current directory: $pwd_output"
+read -p "Is this the correct folder where HTML pages should be generated like /var/www/example.com? (y/n): " correct_folder
+if [ "$correct_folder" != "y" ] && [ "$correct_folder" != "Y" ]; then
+    echo "Please navigate to the correct folder and run the script again."
+    exit 1
+fi
+
+# Check if user has write permissions in current directory
+if [ ! -w "." ]; then
+    echo "Error: You don't have write permissions in the current directory."
+    echo "Please ensure you have the necessary permissions before continuing."
+    exit 1
+fi
+
+# Check if user has sudo privileges
+echo "Checking sudo privileges..."
+if sudo -n true 2>/dev/null; then
+    echo "Sudo privileges confirmed."
+else
+    echo "Warning: This script requires sudo privileges for some operations."
+    read -p "Do you want to test sudo access now? (y/n): " test_sudo
+    if [ "$test_sudo" = "y" ] || [ "$test_sudo" = "Y" ]; then
+        if ! sudo -v; then
+            echo "Error: This script requires sudo privileges. Please ensure you have sudo access."
+            exit 1
+        fi
+    else
+        echo "Warning: Proceeding without confirming sudo access. Some operations may fail."
+    fi
+fi
+
+# Check for required commands
+echo "Checking for required commands..."
+required_commands=("jq" "node" "npm")
+missing_commands=()
+
+for cmd in "${required_commands[@]}"; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        missing_commands+=("$cmd")
+    fi
+done
+
+if [ ${#missing_commands[@]} -ne 0 ]; then
+    echo "Error: The following required commands are missing:"
+    printf '%s\n' "${missing_commands[@]}"
+    read -p "Would you like to install missing dependencies? (y/n): " install_deps
+    if [ "$install_deps" = "y" ] || [ "$install_deps" = "Y" ]; then
+        sudo apt-get update
+        for cmd in "${missing_commands[@]}"; do
+            echo "Installing $cmd..."
+            sudo apt-get install -y "$cmd"
+        done
+    else
+        echo "Please install the missing dependencies and run the script again."
+        exit 1
+    fi
+fi
+
+echo "All pre-checks completed successfully!"
+echo "======================================"
+
 # Function to update config.json
 update_config() {
     echo "Updating config.json settings..."

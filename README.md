@@ -1,3 +1,5 @@
+Trying to delete unnecessary folders automatically, transfer files automatically, create database automatically,
+
 # HTML Product Generator
 
 This project generates static HTML product pages, sitemap, and product XML from CSV data for a website.
